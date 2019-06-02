@@ -16,44 +16,29 @@ import freskog.concurrency.partition._
 
 object PartitioningDemo extends App {
 
-  val config:Config = Config(userTTL = Duration(3, SECONDS), idleTTL = Duration(2, SECONDS), maxPending = 1)
+  val config:Config = Config(userTTL = Duration(3, SECONDS), idleTTL = Duration(2, SECONDS), maxPending = 3)
 
   def brokenUserFunction(startTs:Long, counts:Ref[Map[Int,Int]])(n:Int): ZIO[Console with Clock, Nothing, Unit] =
     ZIO.descriptorWith( desc =>
       for {
-        now <- currentTime (MILLISECONDS) <* sleep(Duration(1000, MILLISECONDS))
-        aft <- currentTime (MILLISECONDS)
-          m <- counts.get
-        msg = s"Consumed successfully at ${now - startTs}ms, done at ${aft - startTs}ms - Fiber: ${desc.id}, n = $n (call #${m(n)})"
-        _   <-  putStrLn(msg)
+        now <- sleep(Duration(100 * n, MILLISECONDS)) *> currentTime (MILLISECONDS)
+        m   <- counts.update(m => m.updated(n, m.getOrElse(n, 0) + 1))
+        msg = s"Offset: ${now - startTs}ms Fiber: ${desc.id}, n = $n (call #${m(n)})"
+        _   <- if (n == 0) throw new IllegalArgumentException(msg) else putStrLn(msg)
       } yield ()
     )
 
   val workItems: List[Int] = List.range(0,11) ::: List.range(0,11) ::: List.range(0, 11) ::: List(30)
 
-  val time: ZIO[Clock, Nothing, Long] = clock.currentTime(TimeUnit.MILLISECONDS)
-
-  def printIfPublished(startTs:Long, counts:Ref[Map[Int,Int]])(n:Int)(wasPublished:Boolean) =
-    ZIO.descriptorWith(desc =>
-      for {
-        now <- time
-          _ <- if(wasPublished)
-                counts.update(m => m.updated(n, m.getOrElse(n, 0) + 1)) >>= (m =>
-                  putStrLn(s"Published successfully at ${now - startTs}ms, - Fiber: ${desc.id}, n = $n (call #${m(n)})"))
-               else
-                  UIO.unit
-      } yield wasPublished
-    )
-
   val program: ZIO[Environment with Partition, Nothing, Int] =
     for {
-      startAt <- time
+      now <- clock.currentTime(TimeUnit.MILLISECONDS)
       counter <- Ref.make(Map.empty[Int,Int])
-          env <- ZIO.environment[Console with Clock]
-      process <- partition[Int](config, _.toString, brokenUserFunction(startAt,counter)(_).provide(env))
-      results <- ZIO.foreach(workItems)(a => process(a) >>= printIfPublished(startAt, counter)(a))
-            _ <- console.putStrLn(s"Published ${results.count(identity)} out of ${results.length}")
-            _ <- ZIO.sleep(Duration.fromScala(10.seconds))
+      env <- ZIO.environment[Console with Clock]
+      process <- partition[Int](config, _.toString, brokenUserFunction(now,counter)(_).provide(env))
+      results <- ZIO.foreach(workItems)(process)
+      _ <- console.putStrLn(s"Published ${results.count(identity)} out of ${results.length}")
+      _ <- ZIO.sleep(Duration.fromScala(10.seconds))
     } yield 0
 
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] =
