@@ -38,7 +38,7 @@ abstract class BaseTests extends FlatSpec with DiagrammedAssertions {
     rts.unsafeRunSync(z).getOrElse(c => throw c.squash)
   }
 
-  def runSTM(z:STM[Throwable, Assertion]) =
+  def runSTM(z:STM[Throwable, Assertion]): Assertion =
     run(z.commit)
 
   def runReal(z:ZIO[Clock with Console, Throwable, Assertion]):Unit = {

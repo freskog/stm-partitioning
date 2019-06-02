@@ -17,6 +17,5 @@ case class TestRuntime(clockR:Ref[TestClock.Data], consoleR:Ref[TestConsole.Data
     new Clock with Console {
       override val clock: Clock.Service[Any] = TestClock(clockR)
       override val console: Console.Service[Any] = TestConsole(consoleR)
-      override val scheduler: Scheduler.Service[Any] = TestScheduler(schedR, self)
     }
 }

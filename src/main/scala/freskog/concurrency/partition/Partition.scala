@@ -4,7 +4,6 @@ import scalaz.zio._
 import scalaz.zio.clock._
 import scalaz.zio.console._
 import scalaz.zio.duration.Duration
-import scalaz.zio.scheduler.Scheduler
 import scalaz.zio.stm._
 
 trait Partition extends Serializable {
@@ -25,9 +24,9 @@ object Partition extends Serializable {
     override val partition: Service[Any] =
       new Service[Any] {
         override def partition[A](config: Config, partIdOf: A => PartId, action: A => UIO[Unit]): ZIO[Any, Nothing, A => UIO[Boolean]] =
-          for {
-            queues <- TRef.make(Map.empty[PartId, TQueue[A]]).commit
-          } yield producer(queues, partIdOf, action)(_).provide(buildEnv(config, env))
+          TRef.make(Map.empty[PartId, TQueue[A]]).commit.map(
+            queues => producer(queues, partIdOf, action)(_).provide(buildEnv(config, env))
+          )
       }
   }
 
@@ -47,7 +46,6 @@ object Partition extends Serializable {
       override def maxPending: Int = conf.maxPending
 
       override val clock:Clock.Service[Any] = env.clock
-      override val scheduler:Scheduler.Service[Any] = env.scheduler
       override val console:Console.Service[Any] = env.console
     }
 
@@ -64,16 +62,16 @@ object Partition extends Serializable {
     queue.size.flatMap(size => if(size == queue.capacity) STM.succeed(false) else queue.offer(a) *> STM.succeed(true))
 
   def debug(cause: Exit.Cause[String]): ZIO[Console, Nothing, Unit] =
-    putStrLn(cause.failures.mkString("\n\t") + cause.defects.mkString("\n\t"))
+    putStrLn(cause.prettyPrint)
 
   def takeNextMessageOrTimeout[A](id: PartId, queue: TQueue[A]): ZIO[Clock with Conf, String, A] =
-    idleTTL >>= queue.take.commit.timeoutFail(s"$id consumer expired")
+    idleTTL flatMap queue.take.commit.timeoutFail(s"$id consumer expired")
 
   def safelyPerformAction[A](id: PartId, action: A => UIO[Unit])(a:A): ZIO[PartEnv, Nothing, Unit] =
-    (userTTL >>= (action(a).timeoutFail(s"$id action timed out")(_))).sandbox.catchAll(debug)
+    (userTTL flatMap (action(a).timeoutFail(s"$id action timed out")(_))).sandbox.catchAll(debug)
 
   def startConsumer[A](id:PartId, queue: TQueue[A], cleanup:UIO[Unit], action: A => UIO[Unit]): ZIO[PartEnv, Nothing, Unit] =
-    (takeNextMessageOrTimeout(id, queue) >>= safelyPerformAction(id, action)).forever.ensuring(cleanup).fork.unit
+    (takeNextMessageOrTimeout(id, queue) flatMap safelyPerformAction(id, action)).forever.option.ensuring(cleanup).fork.unit
 
   def hasConsumer[A](queues:Queues[A], id:PartId): STM[Nothing, Boolean] =
     queues.get.map(_.contains(id))
