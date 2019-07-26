@@ -3,9 +3,9 @@ package freskog.concurrency.partition
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 import freskog.concurrency.partition.Partition.startConsumer
-import scalaz.zio.duration.Duration
-import scalaz.zio.{Promise, UIO}
-import scalaz.zio.stm.TQueue
+import zio.duration.Duration
+import zio.{Promise, UIO}
+import zio.stm.TQueue
 
 class ConsumerTests extends BaseTests {
 

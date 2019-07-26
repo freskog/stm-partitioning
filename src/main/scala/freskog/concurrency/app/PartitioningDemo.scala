@@ -3,13 +3,13 @@ package freskog.concurrency.app
 
 import java.util.concurrent.TimeUnit
 
-import scalaz.zio.blocking.Blocking
-import scalaz.zio.duration.Duration
-import scalaz.zio.random.Random
-import scalaz.zio.system.System
-import scalaz.zio._
-import scalaz.zio.clock._
-import scalaz.zio.console._
+import zio.blocking.Blocking
+import zio.duration.Duration
+import zio.random.Random
+import zio.system.System
+import zio._
+import zio.clock._
+import zio.console._
 
 import scala.concurrent.duration._
 import freskog.concurrency.partition._

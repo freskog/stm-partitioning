@@ -1,10 +1,10 @@
 package freskog.concurrency.partition
 
-import scalaz.zio._
-import scalaz.zio.clock._
-import scalaz.zio.console._
-import scalaz.zio.duration.Duration
-import scalaz.zio.stm._
+import zio._
+import zio.clock._
+import zio.console._
+import zio.duration.Duration
+import zio.stm._
 
 trait Partition extends Serializable {
   val partition:Partition.Service[Any]

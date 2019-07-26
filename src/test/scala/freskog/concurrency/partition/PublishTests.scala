@@ -1,7 +1,7 @@
 package freskog.concurrency.partition
 
 import freskog.concurrency.partition.Partition.publish
-import scalaz.zio.stm.TQueue
+import zio.stm.TQueue
 
 class PublishTests extends BaseTests {
 

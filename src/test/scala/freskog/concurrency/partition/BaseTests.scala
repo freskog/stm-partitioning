@@ -2,11 +2,11 @@ package freskog.concurrency.partition
 
 import freskog.concurrency.partition.Partition.PartEnv
 import org.scalatest.{Assertion, DiagrammedAssertions, FlatSpec}
-import scalaz.zio.clock.Clock
-import scalaz.zio.console.Console
-import scalaz.zio.stm.STM
-import scalaz.zio.testkit.{TestClock, TestConsole}
-import scalaz.zio._
+import zio.clock.Clock
+import zio.console.Console
+import zio.stm.STM
+import zio.testkit.{TestClock, TestConsole}
+import zio._
 
 abstract class BaseTests extends FlatSpec with DiagrammedAssertions {
 
