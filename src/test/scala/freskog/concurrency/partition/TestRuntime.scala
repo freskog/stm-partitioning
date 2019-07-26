@@ -1,12 +1,12 @@
 package freskog.concurrency.partition
 
 
-import scalaz.zio.{Ref, Runtime}
-import scalaz.zio.clock.Clock
-import scalaz.zio.console.Console
-import scalaz.zio.internal.{Platform, PlatformLive}
-import scalaz.zio.scheduler.Scheduler
-import scalaz.zio.testkit.{TestClock, TestConsole, TestScheduler}
+import zio.{Ref, Runtime}
+import zio.clock.Clock
+import zio.console.Console
+import zio.internal.{Platform, PlatformLive}
+import zio.scheduler.Scheduler
+import zio.testkit.{TestClock, TestConsole, TestScheduler}
 
 
 case class TestRuntime(clockR:Ref[TestClock.Data], consoleR:Ref[TestConsole.Data], schedR:Ref[TestClock.Data]) extends Runtime[Clock with Console] { self =>

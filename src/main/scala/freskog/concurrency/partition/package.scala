@@ -1,6 +1,6 @@
 package freskog.concurrency
 
-import scalaz.zio.{UIO, ZIO}
+import zio.{UIO, ZIO}
 
 package object partition extends Partition.Service[Partition] {
 
