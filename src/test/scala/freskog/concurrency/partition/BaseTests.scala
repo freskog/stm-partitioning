@@ -1,11 +1,11 @@
 package freskog.concurrency.partition
 
 import freskog.concurrency.partition.Partition.PartEnv
-import org.scalatest.{Assertion, DiagrammedAssertions, FlatSpec}
+import org.scalatest.{ Assertion, DiagrammedAssertions, FlatSpec }
 import zio.clock.Clock
 import zio.console.Console
 import zio.stm.STM
-import zio.testkit.{TestClock, TestConsole}
+import zio.testkit.{ TestClock, TestConsole }
 import zio._
 
 abstract class BaseTests extends FlatSpec with DiagrammedAssertions {
@@ -13,13 +13,13 @@ abstract class BaseTests extends FlatSpec with DiagrammedAssertions {
   val realRts: DefaultRuntime =
     new DefaultRuntime {}
 
-  val clockData:UIO[Ref[TestClock.Data]] =
+  val clockData: UIO[Ref[TestClock.Data]] =
     Ref.make(TestClock.Zero)
 
-  val consoleData:UIO[Ref[TestConsole.Data]] =
+  val consoleData: UIO[Ref[TestConsole.Data]] =
     Ref.make(TestConsole.Data())
 
-  val schedulerData:UIO[Ref[TestClock.Data]] =
+  val schedulerData: UIO[Ref[TestClock.Data]] =
     Ref.make(TestClock.Zero)
 
   val testRts: UIO[TestRuntime] =
@@ -27,22 +27,21 @@ abstract class BaseTests extends FlatSpec with DiagrammedAssertions {
       case clockR <*> consoleR <*> schedR => TestRuntime(clockR, consoleR, schedR)
     }
 
-  def partEnv(config:Config):ZIO[Clock with Console, Nothing, PartEnv] =
+  def partEnv(config: Config): ZIO[Clock with Console, Nothing, PartEnv] =
     ZIO.environment[Clock with Console].map(Partition.buildEnv(config, _))
 
-  def unwrap[R,E,A](zio:ZIO[Clock with Console,E,A]): A =
+  def unwrap[R, E, A](zio: ZIO[Clock with Console, E, A]): A =
     realRts.unsafeRun(zio)
 
-  def run(z:ZIO[Clock with Console, Throwable, Assertion]): Assertion = {
+  def run(z: ZIO[Clock with Console, Throwable, Assertion]): Assertion = {
     val rts = unwrap(testRts)
     rts.unsafeRunSync(z).getOrElse(c => throw c.squash)
   }
 
-  def runSTM(z:STM[Throwable, Assertion]): Assertion =
+  def runSTM(z: STM[Throwable, Assertion]): Assertion =
     run(z.commit)
 
-  def runReal(z:ZIO[Clock with Console, Throwable, Assertion]):Unit = {
+  def runReal(z: ZIO[Clock with Console, Throwable, Assertion]): Unit =
     realRts.unsafeRunSync(z).getOrElse(c => throw c.squash)
-  }
 
 }

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 
 import freskog.concurrency.partition.Partition.startConsumer
 import zio.duration.Duration
-import zio.{Promise, UIO}
+import zio.{ Promise, UIO }
 import zio.stm.TQueue
 
 class ConsumerTests extends BaseTests {
@@ -23,10 +23,10 @@ class ConsumerTests extends BaseTests {
       for {
         env     <- partEnv(config)
         queue   <- TQueue.make[String](1).commit
-        promise <- Promise.make[Nothing,String]
-        _       <- startConsumer("p1", queue, UIO.unit, promise.succeed(_:String).unit).provide(env)
+        promise <- Promise.make[Nothing, String]
+        _       <- startConsumer("p1", queue, UIO.unit, promise.succeed(_: String).unit).provide(env)
         _       <- queue.offer("published").commit
-        result  <- promise.await.timeoutFail("not published")(Duration(150,MILLISECONDS)).fold(identity,identity)
+        result  <- promise.await.timeoutFail("not published")(Duration(150, MILLISECONDS)).fold(identity, identity)
       } yield assert(result == "published")
     )
   }
@@ -36,10 +36,15 @@ class ConsumerTests extends BaseTests {
       for {
         env     <- partEnv(config)
         queue   <- TQueue.make[Boolean](1).commit
-        promise <- Promise.make[Nothing,String]
-        _       <- startConsumer("p1", queue, UIO.unit, (b:Boolean) => if(b) throw new IllegalArgumentException("BOOM!") else promise.succeed("done!").unit).provide(env)
-        _       <- queue.offerAll(List(true,false)).commit
-        result  <- promise.await.timeoutFail("not published")(Duration(150,MILLISECONDS)).fold(identity,identity)
+        promise <- Promise.make[Nothing, String]
+        _ <- startConsumer(
+              "p1",
+              queue,
+              UIO.unit,
+              (b: Boolean) => if (b) throw new IllegalArgumentException("BOOM!") else promise.succeed("done!").unit
+            ).provide(env)
+        _      <- queue.offerAll(List(true, false)).commit
+        result <- promise.await.timeoutFail("not published")(Duration(150, MILLISECONDS)).fold(identity, identity)
       } yield assert(result == "done!")
     )
   }
