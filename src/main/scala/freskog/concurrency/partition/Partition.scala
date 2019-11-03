@@ -12,8 +12,6 @@ trait Partition extends Serializable {
   val partition: Partition.Service[Any]
 }
 
-case class Config(userTTL: Duration, idleTTL: Duration, maxPending: Int)
-
 object Partition extends Serializable {
 
   trait Service[R] extends Serializable {
