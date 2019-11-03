@@ -1,17 +1,15 @@
 package freskog.concurrency.partition
 
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 import zio._
-import zio.console._
+import zio.console.{ Console }
 import zio.test._
-import zio.test.Assertion._
-import zio.test.TestAspect._
-import zio.test.environment._
-import zio.stm._
+import zio.test.Assertion.{ equalTo }
+import zio.test.TestAspect.{ timeout }
+import zio.stm.{ TQueue }
 import zio.duration._
-import zio.clock._
+import zio.clock.Clock
 
 import freskog.concurrency.partition._
 import freskog.concurrency.partition.Partition._
@@ -40,7 +38,7 @@ object STMSpec
               q         <- TQueue.make[Int](0)
               published <- publish(q, 1)
             } yield assert(published, equalTo(false))).commit
-          }, //@@ timeout(1.nanos),
+          } @@ timeout(1.nanos),
           testM("always successfully process a value on the queue") {
             val config =
               Config(
@@ -59,11 +57,9 @@ object STMSpec
               latch   = promise.succeed(_: String).unit
               _       <- startConsumer("p1", queue, UIO.unit, latch).provide(env)
               _       <- queue.offer("published").commit
-              result <- promise.await
-                         .timeoutFail("not published")(Duration(150 , MILLISECONDS))
-                         .fold(identity, identity)
+              result  <- promise.await
             } yield assert(result, equalTo("published"))
-          }
+          } @@ timeout(150.millis)
         )
       )
     )
