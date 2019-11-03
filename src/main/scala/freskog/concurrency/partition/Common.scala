@@ -1,12 +1,9 @@
 package freskog.concurrency.partition
 
-import zio._
-import zio.clock._
-import zio.console._
+import zio.clock.{ Clock }
+import zio.console.{ Console }
 import zio.duration.Duration
-import zio.stm._
-import zio.blocking.Blocking
-import zio.random.Random
+import zio.stm.{ TQueue, TRef }
 
 trait Conf {
   def userTTL: Duration

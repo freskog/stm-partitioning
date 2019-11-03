@@ -1,10 +1,10 @@
 package freskog.concurrency.partition
 
-import zio._
-import zio.clock._
-import zio.console._
+import zio.{ UIO, ZIO }
+import zio.clock.{ Clock }
+import zio.console.{ putStrLn, Console }
 import zio.duration.Duration
-import zio.stm._
+import zio.stm.{ STM, TQueue, TRef }
 
 import freskog.concurrency.partition.Common._
 
@@ -59,7 +59,7 @@ object Partition extends Serializable {
   def publish[A](queue: TQueue[A], a: A): STM[Nothing, Boolean] =
     queue.size.flatMap(size => if (size == queue.capacity) STM.succeed(false) else queue.offer(a) *> STM.succeed(true))
 
-  def debug(cause: Exit.Cause[String]): ZIO[Console, Nothing, Unit] =
+  def debug(cause: zio.Cause[String]): ZIO[Console, Nothing, Unit] =
     putStrLn(cause.prettyPrint)
 
   def takeNextMessageOrTimeout[A](id: PartId, queue: TQueue[A]): ZIO[Clock with Conf, String, A] =
