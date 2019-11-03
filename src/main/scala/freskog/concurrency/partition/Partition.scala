@@ -6,6 +6,8 @@ import zio.console._
 import zio.duration.Duration
 import zio.stm._
 
+import freskog.concurrency.partition.Common._
+
 trait Partition extends Serializable {
   val partition: Partition.Service[Any]
 }
@@ -36,15 +38,6 @@ object Partition extends Serializable {
             )
       }
   }
-
-  trait Conf {
-    def userTTL: Duration
-    def idleTTL: Duration
-    def maxPending: Int
-  }
-
-  type PartEnv   = Clock with Console with Conf
-  type Queues[A] = TRef[Map[PartId, TQueue[A]]]
 
   def buildEnv(conf: Config, env: Clock with Console): PartEnv =
     new Conf with Clock with Console {
